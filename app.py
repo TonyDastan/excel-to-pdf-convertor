@@ -40,6 +40,15 @@ def convert_excel_to_pdf():
         subtitle = request.form.get("subtitle", "")
         report_date = request.form.get("report_date", "")
 
+        print("=" * 60)
+        print(f"DEBUG - Report date received: '{report_date}'")
+        print(f"DEBUG - Report date type: {type(report_date)}")
+        print(f"DEBUG - Report date length: {len(report_date) if report_date else 0}")
+        print(
+            f"DEBUG - Report date stripped: '{report_date.strip() if report_date else ''}'"
+        )
+        print("=" * 60)
+
         if not file or not allowed_file(file.filename):
             return jsonify(
                 {"error": "Invalid file format. Please upload Excel or CSV files."}
@@ -87,14 +96,35 @@ def convert_excel_to_pdf():
 
         # Generate PDF
         pdf_buffer = io.BytesIO()
-        # Use the same filename as Excel but with .pdf extension
-        pdf_filename = os.path.splitext(filename)[0] + ".pdf"
 
         # Format title and subtitle - title includes branch name + "DAILY STAFF ATTENDANCE", subtitle is date
         branch_name = os.path.splitext(filename)[0].upper()
+
+        # Create PDF filename with branch name and date (only if date provided)
+        print(f"DEBUG - Checking if report_date exists: {bool(report_date)}")
+        print(
+            f"DEBUG - Checking if report_date.strip() exists: {bool(report_date.strip()) if report_date else False}"
+        )
+
+        if report_date and report_date.strip():
+            try:
+                print(f"DEBUG - Attempting to parse date: '{report_date}'")
+                date_obj = datetime.strptime(report_date, "%Y-%m-%d")
+                date_str = date_obj.strftime("%d-%m-%Y")
+                pdf_filename = f"{branch_name}_{date_str}.pdf"
+                print(f"DEBUG - SUCCESS! PDF filename created: '{pdf_filename}'")
+            except Exception as e:
+                print(f"DEBUG - ERROR creating filename: {e}")
+                print(f"DEBUG - Exception type: {type(e).__name__}")
+                pdf_filename = f"{branch_name}.pdf"
+        else:
+            pdf_filename = f"{branch_name}.pdf"
+            print(
+                f"DEBUG - No valid date provided, using filename without date: '{pdf_filename}'"
+            )
         formatted_title = f"{branch_name} DAILY STAFF ATTENDANCE"
         formatted_subtitle = "LATE COMMERS AND ABSENTEEISM"
-        if report_date:
+        if report_date and report_date.strip():
             try:
                 date_obj = datetime.strptime(report_date, "%Y-%m-%d")
                 formatted_subtitle = (
@@ -108,18 +138,29 @@ def convert_excel_to_pdf():
         )
         pdf_buffer.seek(0)
 
-        # Save to output folder (optional)
+        # Save to output folder first
         output_path = os.path.join(OUTPUT_FOLDER, pdf_filename)
         with open(output_path, "wb") as f:
             f.write(pdf_buffer.read())
 
-        pdf_buffer.seek(0)
-        return send_file(
-            pdf_buffer,
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=pdf_filename,
+        print("=" * 60)
+        print(f"DEBUG - FINAL: Sending file with name: '{pdf_filename}'")
+        print(f"DEBUG - Saved to: '{output_path}'")
+        print("=" * 60)
+
+        # Read the saved file and create response with explicit headers
+        with open(output_path, "rb") as f:
+            pdf_data = f.read()
+
+        from flask import Response, make_response
+
+        response = make_response(pdf_data)
+        response.headers["Content-Type"] = "application/pdf"
+        response.headers["Content-Disposition"] = (
+            f'attachment; filename="{pdf_filename}"'
         )
+        response.headers["Content-Length"] = len(pdf_data)
+        return response
 
     except Exception as e:
         return jsonify({"error": f"Error: {str(e)}"}), 500
@@ -195,7 +236,7 @@ def batch_convert_excel_to_pdf():
                     branch_name = os.path.splitext(filename)[0].upper()
                     formatted_title = f"{branch_name} DAILY STAFF ATTENDANCE"
                     formatted_subtitle = "LATE COMMERS AND ABSENTEEISM"
-                    if report_date:
+                    if report_date and report_date.strip():
                         try:
                             date_obj = datetime.strptime(report_date, "%Y-%m-%d")
                             formatted_subtitle = f"LATE COMMERS AND ABSENTEEISM {date_obj.strftime('%d %B %Y')}"
@@ -211,8 +252,16 @@ def batch_convert_excel_to_pdf():
                     )
                     pdf_buffer.seek(0)
 
-                    # Save PDF with same name as Excel file
-                    pdf_filename = os.path.splitext(filename)[0] + ".pdf"
+                    # Save PDF with branch name and date (only if date provided)
+                    if report_date and report_date.strip():
+                        try:
+                            date_obj = datetime.strptime(report_date, "%Y-%m-%d")
+                            date_str = date_obj.strftime("%d-%m-%Y")
+                            pdf_filename = f"{branch_name}_{date_str}.pdf"
+                        except:
+                            pdf_filename = f"{branch_name}.pdf"
+                    else:
+                        pdf_filename = f"{branch_name}.pdf"
                     pdf_path = os.path.join(batch_folder, pdf_filename)
 
                     with open(pdf_path, "wb") as f:
@@ -244,13 +293,19 @@ def batch_convert_excel_to_pdf():
                 arcname = os.path.basename(pdf_file)
                 zipf.write(pdf_file, arcname)
 
-        # Return ZIP file
-        return send_file(
-            zip_path,
-            mimetype="application/zip",
-            as_attachment=True,
-            download_name=zip_filename,
+        # Return ZIP file with explicit headers
+        with open(zip_path, "rb") as f:
+            zip_data = f.read()
+
+        from flask import Response, make_response
+
+        response = make_response(zip_data)
+        response.headers["Content-Type"] = "application/zip"
+        response.headers["Content-Disposition"] = (
+            f'attachment; filename="{zip_filename}"'
         )
+        response.headers["Content-Length"] = len(zip_data)
+        return response
 
     except Exception as e:
         return jsonify({"error": f"Error: {str(e)}"}), 500
@@ -513,8 +568,8 @@ def generate_attendance_pdf(pdf_buffer, df, title, subtitle, report_date=None):
     story.append(Paragraph("NOTE:", legend_style))
 
     legend_table_data = [
-        ["", "THE YELLOW COLOR INDICATE ABSENTEEISM"],
-        ["", "THE RED COLOR INDICATE LATE COMMERS"],
+        ["", "THE YELLOW COLOR INDICATES ABSENTEEISM"],
+        ["", "THE RED COLOR INDICATES LATE COMERS"],
     ]
 
     legend_table = Table(legend_table_data, colWidths=[0.3 * inch, 5.0 * inch])
