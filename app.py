@@ -517,7 +517,7 @@ def generate_attendance_pdf(pdf_buffer, df, title, subtitle, report_date=None):
         ["", "THE RED COLOR INDICATE LATE COMMERS"],
     ]
 
-    legend_table = Table(legend_table_data, colWidths=[0.25 * inch, 3.5 * inch])
+    legend_table = Table(legend_table_data, colWidths=[0.3 * inch, 5.0 * inch])
     legend_table.setStyle(
         TableStyle(
             [
