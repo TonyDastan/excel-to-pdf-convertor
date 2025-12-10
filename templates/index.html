@@ -2,22 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TXT Folder Merger</title>
+    <title>Excel to PDF Converter</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>TXT Folder Merger</h1>
+        <h1>Excel to PDF Converter</h1>
+        <p class="subtitle">Convert attendance records and other Excel files to professional PDFs</p>
+        
+        <!-- Mode Selection -->
+        <div class="mode-selector">
+            <button type="button" class="mode-btn active" data-mode="single">Single File</button>
+            <button type="button" class="mode-btn" data-mode="batch">Batch Upload</button>
+        </div>
+        
         <form id="upload-form" enctype="multipart/form-data">
-            <div id="drop-zone">Drag & Drop a Folder Here</div>
-            <div id="file-info" class="hidden"></div>
-            <input type="file" id="file-input" name="files[]" multiple webkitdirectory directory hidden>
-            <button type="submit">Merge Files</button>
+            <!-- File Upload Section -->
+            <div class="form-section">
+                <h3 id="step-title">Step 1: Upload Excel File</h3>
+                <div id="drop-zone">Drag & Drop Your Excel File Here or Click to Browse</div>
+                <div id="file-info" class="hidden"></div>
+                <input type="file" id="file-input" name="file" accept=".xlsx,.xls,.csv" hidden>
+            </div>
+
+            <!-- Customization Section -->
+            <div class="form-section" id="customization-section">
+                <h3>Step 2: Customize PDF (Optional)</h3>
+                
+                <div class="form-group">
+                    <label for="title">Report Title:</label>
+                    <input type="text" id="title" name="title" placeholder="Auto-filled with file name" readonly>
+                    <small>Automatically filled from the uploaded Excel file name</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="subtitle">Report Subtitle:</label>
+                    <input type="text" id="subtitle" name="subtitle" placeholder="e.g., LATE COMMERS AND ABSENTEEISM" value="LATE COMMERS AND ABSENTEEISM">
+                </div>
+
+                <div class="form-group">
+                    <label for="report-date">Report Date:</label>
+                    <input type="date" id="report-date" name="report_date">
+                    <small>Select the date for this attendance report</small>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn" id="submit-btn">Convert to PDF</button>
         </form>
+
         <div id="result"></div>
+        
         <div class="dev-by">
-            Developed by
-            <a class="william" href="http://william-strategy.com" target="_blank">William's Great Strategy</a>
+            © MarsCom@2025
         </div>
     </div>
     
