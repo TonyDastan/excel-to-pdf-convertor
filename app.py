@@ -123,15 +123,13 @@ def convert_excel_to_pdf():
                 f"DEBUG - No valid date provided, using filename without date: '{pdf_filename}'"
             )
         formatted_title = f"{branch_name} DAILY STAFF ATTENDANCE"
-        formatted_subtitle = "LATE COMMERS AND ABSENTEEISM"
+        formatted_subtitle = "LATE COMMERS AND ABSENTEEISM AS AT"
         if report_date and report_date.strip():
             try:
                 date_obj = datetime.strptime(report_date, "%Y-%m-%d")
-                formatted_subtitle = (
-                    f"LATE COMMERS AND ABSENTEEISM {date_obj.strftime('%d %B %Y')}"
-                )
+                formatted_subtitle = f"LATE COMMERS AND ABSENTEEISM AS AT {date_obj.strftime('%d %B %Y')}"
             except:
-                formatted_subtitle = f"LATE COMMERS AND ABSENTEEISM {report_date}"
+                formatted_subtitle = f"LATE COMMERS AND ABSENTEEISM AS AT {report_date}"
 
         generate_attendance_pdf(
             pdf_buffer, df, formatted_title, formatted_subtitle, report_date
@@ -235,14 +233,14 @@ def batch_convert_excel_to_pdf():
                     # Format title and subtitle - title includes branch name + "DAILY STAFF ATTENDANCE", subtitle is date
                     branch_name = os.path.splitext(filename)[0].upper()
                     formatted_title = f"{branch_name} DAILY STAFF ATTENDANCE"
-                    formatted_subtitle = "LATE COMMERS AND ABSENTEEISM"
+                    formatted_subtitle = "LATE COMMERS AND ABSENTEEISM AS AT"
                     if report_date and report_date.strip():
                         try:
                             date_obj = datetime.strptime(report_date, "%Y-%m-%d")
-                            formatted_subtitle = f"LATE COMMERS AND ABSENTEEISM {date_obj.strftime('%d %B %Y')}"
+                            formatted_subtitle = f"LATE COMMERS AND ABSENTEEISM AS AT {date_obj.strftime('%d %B %Y')}"
                         except:
                             formatted_subtitle = (
-                                f"LATE COMMERS AND ABSENTEEISM {report_date}"
+                                f"LATE COMMERS AND ABSENTEEISM AS AT {report_date}"
                             )
 
                     # Generate PDF
